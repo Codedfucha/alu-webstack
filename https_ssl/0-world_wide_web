@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This bash script retrieves and displays DNS record information for subdomains.
+# This script retrieves and displays DNS record information for subdomains.
 
 # Function to query and display DNS record information
 get_record_info() {
@@ -7,8 +7,8 @@ get_record_info() {
     local domain=$2
     local full_domain="${subdomain}.${domain}"
     
-    # Use dig +short to get the DNS record for the subdomain and domain
-    local result=$(dig +short "$full_domain" A)
+    # Use dig and awk to extract the required IP address
+    local result=$(dig "$full_domain" A | awk '/^;; ANSWER SECTION:/ {getline; print $NF}')
     
     if [[ -z "$result" ]]; then
         echo "The subdomain $subdomain is not found or does not have an A record."
@@ -35,4 +35,3 @@ else
     get_record_info "web-01" "$domain"
     get_record_info "web-02" "$domain"
 fi
-
