@@ -13,7 +13,7 @@ get_record_info() {
     if [[ -z "$result" ]]; then
         echo "The subdomain $subdomain is not found or does not have an A record."
     else
-        echo "The subdomain $subdomain is an A record and points to $result"
+        echo "The subdomain $subdomain is a A record and points to $result"
     fi
 }
 
