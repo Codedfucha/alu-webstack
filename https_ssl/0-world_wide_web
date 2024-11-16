@@ -1,38 +1,43 @@
 #!/usr/bin/env bash
-# Function to fetch and format DNS info
+# This script audits subdomains and their DNS records using dig and awk.
+
+# Function to get subdomain information
 get_subdomain_info() {
-    local domain=$1
-    local subdomain=$2
+    local subdomain=$1
+    local domain=$2
+    local full_domain="${subdomain}.${domain}"
 
-    # Run dig command to get the DNS information
-    result=$(dig +short "$subdomain.$domain")
+    # Use dig to fetch DNS records and awk to parse the output
+    local record=$(dig +noall +answer "$full_domain" | awk 'NR==1 {print $4, $5}')
 
-    # Check if the result is empty
-    if [ -z "$result" ]; then
-        echo "The subdomain $subdomain is not found."
+    if [[ -n "$record" ]]; then
+        local record_type=$(echo "$record" | awk '{print $1}')
+        local destination=$(echo "$record" | awk '{print $2}')
+        echo "The subdomain $subdomain is a $record_type record and points to $destination"
     else
-        echo "The subdomain $subdomain is a A record and points to $result"
+        echo "The subdomain $subdomain does not resolve to a record."
     fi
 }
 
-# Check if domain is provided
-if [ -z "$1" ]; then
-    echo "Domain is required"
+# Main script logic
+if [[ -z "$1" ]]; then
+    echo "Usage: $0 domain [subdomain]"
     exit 1
 fi
 
-# The domain to audit
 domain=$1
+subdomain=$2
 
-# If a subdomain is provided, audit that subdomain
-if [ -n "$2" ]; then
-    subdomain=$2
-    get_subdomain_info "$domain" "$subdomain"
+# Predefined subdomains
+subdomains=("www" "lb-01" "web-01" "web-02")
+
+if [[ -n "$subdomain" ]]; then
+    # Check for a specific subdomain
+    get_subdomain_info "$subdomain" "$domain"
 else
-    # If no subdomain is provided, check multiple subdomains
-    subdomains=("www" "lb-01" "web-01" "web-02")
-
-    for subdomain in "${subdomains[@]}"; do
-        get_subdomain_info "$domain" "$subdomain"
+    # Check for all predefined subdomains
+    for sub in "${subdomains[@]}"; do
+        get_subdomain_info "$sub" "$domain"
     done
 fi
+
