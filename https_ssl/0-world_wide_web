@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 # Function to fetch and format DNS info
 get_subdomain_info() {
     local domain=$1
