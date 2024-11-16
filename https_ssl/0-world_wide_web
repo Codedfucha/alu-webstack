@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Function to fetch and format DNS info
+get_subdomain_info() {
+    local domain=$1
+    local subdomain=$2
+
+    # Run dig command to get the DNS information
+    result=$(dig +short "$subdomain.$domain")
+
+    # Check if the result is empty
+    if [ -z "$result" ]; then
+        echo "The subdomain $subdomain is not found."
+    else
+        echo "The subdomain $subdomain is a A record and points to $result"
+    fi
+}
+
+# Check if domain is provided
+if [ -z "$1" ]; then
+    echo "Domain is required"
+    exit 1
+fi
+
+# The domain to audit
+domain=$1
+
+# If a subdomain is provided, audit that subdomain
+if [ -n "$2" ]; then
+    subdomain=$2
+    get_subdomain_info "$domain" "$subdomain"
+else
+    # If no subdomain is provided, check multiple subdomains
+    subdomains=("www" "lb-01" "web-01" "web-02")
+
+    for subdomain in "${subdomains[@]}"; do
+        get_subdomain_info "$domain" "$subdomain"
+    done
+fi
