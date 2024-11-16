@@ -1,43 +1,38 @@
 #!/usr/bin/env bash
-# This script audits subdomains and their DNS records using dig and awk.
+# This bash script retrieves and displays DNS record information for subdomains.
 
-# Function to get subdomain information
-get_subdomain_info() {
+# Function to query and display DNS record information
+get_record_info() {
     local subdomain=$1
     local domain=$2
     local full_domain="${subdomain}.${domain}"
-
-    # Use dig to fetch DNS records and awk to parse the output
-    local record=$(dig +noall +answer "$full_domain" | awk 'NR==1 {print $4, $5}')
-
-    if [[ -n "$record" ]]; then
-        local record_type=$(echo "$record" | awk '{print $1}')
-        local destination=$(echo "$record" | awk '{print $2}')
-        echo "The subdomain $subdomain is a $record_type record and points to $destination"
+    
+    # Use dig +short to get the DNS record for the subdomain and domain
+    local result=$(dig +short "$full_domain" A)
+    
+    if [[ -z "$result" ]]; then
+        echo "The subdomain $subdomain is not found or does not have an A record."
     else
-        echo "The subdomain $subdomain does not resolve to a record."
+        echo "The subdomain $subdomain is an A record and points to $result"
     fi
 }
 
 # Main script logic
-if [[ -z "$1" ]]; then
-    echo "Usage: $0 domain [subdomain]"
+domain=$1
+
+if [[ -z "$domain" ]]; then
+    echo "Usage: $0 <domain> [subdomain]"
     exit 1
 fi
 
-domain=$1
-subdomain=$2
-
-# Predefined subdomains
-subdomains=("www" "lb-01" "web-01" "web-02")
-
-if [[ -n "$subdomain" ]]; then
-    # Check for a specific subdomain
-    get_subdomain_info "$subdomain" "$domain"
+if [[ -n "$2" ]]; then
+    # Specific subdomain provided
+    get_record_info "$2" "$domain"
 else
-    # Check for all predefined subdomains
-    for sub in "${subdomains[@]}"; do
-        get_subdomain_info "$sub" "$domain"
-    done
+    # Default subdomains
+    get_record_info "www" "$domain"
+    get_record_info "lb-01" "$domain"
+    get_record_info "web-01" "$domain"
+    get_record_info "web-02" "$domain"
 fi
 
